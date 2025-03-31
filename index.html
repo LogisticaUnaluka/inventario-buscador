@@ -3,343 +3,686 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Calorías</title>
+    <title>Sistema de Búsqueda de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
+            padding-top: 20px;
+            background-color: #f8f9fa;
         }
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 1200px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            display: block;
-            margin: 20px auto;
-            width: 200px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .results {
-            margin-top: 30px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        .results h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .tabs {
-            display: flex;
+        .card {
             margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: none;
         }
-        .tab {
-            padding: 10px 20px;
+        .card-header {
+            font-weight: 600;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .product-image {
+            max-height: 300px;
+            object-fit: contain;
             cursor: pointer;
-            border: 1px solid #ddd;
-            background-color: #f1f1f1;
-            border-radius: 4px 4px 0 0;
-            margin-right: 5px;
         }
-        .tab.active {
-            background-color: white;
-            border-bottom: 1px solid white;
+        #searchResults {
+            max-height: 300px;
+            overflow-y: auto;
+            position: absolute;
+            width: calc(100% - 2rem);
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        .tab-content {
+        .result-item {
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: background-color 0.2s;
+        }
+        .result-item:hover {
+            background-color: #f5f5f5;
+        }
+        .trend-graph {
+            height: 200px;
+        }
+        .hidden {
             display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
         }
-        .tab-content.active {
-            display: block;
+        .fade-in {
+            animation: fadeIn 0.3s;
         }
-        .reference-image {
-            max-width: 100%;
-            height: auto;
-            margin: 20px 0;
-            display: block;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .top-bar {
+            background-color: #343a40;
+            color: white;
+            padding: 10px 0;
+            margin-bottom: 30px;
         }
         .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 20px 0;
             margin-top: 30px;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
         }
-        @media (max-width: 600px) {
-            button {
-                width: 100%;
-            }
-            .tabs {
-                flex-direction: column;
-            }
-            .tab {
-                margin-bottom: 5px;
-                border-radius: 4px;
-            }
+        .month-filter {
+            margin-bottom: 20px;
+        }
+        .product-image-container {
+            text-align: center;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Calculadora de Calorías</h1>
-        
-        <div class="tabs">
-            <div class="tab active" onclick="openTab(event, 'calculadora')">Calculadora</div>
-            <div class="tab" onclick="openTab(event, 'informacion')">Información</div>
-        </div>
-        
-        <div id="calculadora" class="tab-content active">
-            <div class="form-group">
-                <label for="sexo">Sexo:</label>
-                <select id="sexo">
-                    <option value="hombre">Hombre</option>
-                    <option value="mujer">Mujer</option>
-                </select>
+    <!-- Barra superior -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">Sistema de Inventario</h1>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span>Actualizado: <span id="lastUpdated">Cargando...</span></span>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="edad">Edad (años):</label>
-                <input type="number" id="edad" min="18" max="80" placeholder="Entre 18 y 80 años">
-            </div>
-            
-            <div class="form-group">
-                <label for="peso">Peso (kg):</label>
-                <input type="number" id="peso" min="40" max="200" step="0.1" placeholder="En kilogramos">
-            </div>
-            
-            <div class="form-group">
-                <label for="altura">Altura (cm):</label>
-                <input type="number" id="altura" min="140" max="220" placeholder="En centímetros">
-            </div>
-            
-            <div class="form-group">
-                <label for="actividad">Nivel de actividad física:</label>
-                <select id="actividad">
-                    <option value="1.2">Sedentario (poco o ningún ejercicio)</option>
-                    <option value="1.375">Ligera actividad (ejercicio ligero 1-3 días/semana)</option>
-                    <option value="1.55">Moderada actividad (ejercicio moderado 3-5 días/semana)</option>
-                    <option value="1.725">Alta actividad (ejercicio intenso 6-7 días/semana)</option>
-                    <option value="1.9">Muy alta actividad (atletas, 2 veces al día)</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="objetivo">Objetivo:</label>
-                <select id="objetivo">
-                    <option value="perder">Perder peso</option>
-                    <option value="mantener">Mantener peso</option>
-                    <option value="ganar">Ganar peso</option>
-                </select>
-            </div>
-            
-            <button onclick="calcularCalorias()">Calcular Calorías</button>
-            
-            <div id="resultados" class="results" style="display: none;">
-                <h2>Resultados</h2>
-                <p><strong>Tasa Metabólica Basal (TMB):</strong> <span id="tmb"></span> calorías/día</p>
-                <p><strong>Calorías para mantenimiento:</strong> <span id="mantenimiento"></span> calorías/día</p>
-                <p><strong>Calorías recomendadas para tu objetivo:</strong> <span id="objetivo-calorias"></span> calorías/día</p>
-                
-                <h3>Distribución de macronutrientes recomendada:</h3>
-                <table>
-                    <tr>
-                        <th>Macronutriente</th>
-                        <th>Porcentaje</th>
-                        <th>Gramos</th>
-                        <th>Calorías</th>
-                    </tr>
-                    <tr>
-                        <td>Proteínas</td>
-                        <td>30%</td>
-                        <td id="proteinas-g"></td>
-                        <td id="proteinas-cal"></td>
-                    </tr>
-                    <tr>
-                        <td>Carbohidratos</td>
-                        <td>40%</td>
-                        <td id="carbos-g"></td>
-                        <td id="carbos-cal"></td>
-                    </tr>
-                    <tr>
-                        <td>Grasas</td>
-                        <td>30%</td>
-                        <td id="grasas-g"></td>
-                        <td id="grasas-cal"></td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-        
-        <div id="informacion" class="tab-content">
-            <h2>¿Cómo funciona esta calculadora?</h2>
-            <p>Esta calculadora utiliza la fórmula de Harris-Benedict para estimar tu Tasa Metabólica Basal (TMB), que es la cantidad de energía que tu cuerpo necesita para mantener sus funciones vitales en reposo.</p>
-            
-            <p><strong>Fórmulas utilizadas:</strong></p>
-            <p>Para hombres: TMB = 66.5 + (13.75 × peso en kg) + (5.003 × altura en cm) - (6.75 × edad)</p>
-            <p>Para mujeres: TMB = 655.1 + (9.563 × peso en kg) + (1.850 × altura en cm) - (4.676 × edad)</p>
-            
-            <p>Después, esta TMB se multiplica por un factor según tu nivel de actividad física para calcular tu gasto calórico diario total.</p>
-            
-            <h3>Niveles de actividad:</h3>
-            <ul>
-                <li><strong>Sedentario (1.2):</strong> Poco o ningún ejercicio</li>
-                <li><strong>Ligera actividad (1.375):</strong> Ejercicio ligero 1-3 días a la semana</li>
-                <li><strong>Moderada actividad (1.55):</strong> Ejercicio moderado 3-5 días a la semana</li>
-                <li><strong>Alta actividad (1.725):</strong> Ejercicio intenso 6-7 días a la semana</li>
-                <li><strong>Muy alta actividad (1.9):</strong> Atletas, entrenamiento 2 veces al día</li>
-            </ul>
-            
-            <h3>Ajustes según objetivo:</h3>
-            <ul>
-                <li><strong>Perder peso:</strong> Se resta un 20% de las calorías de mantenimiento</li>
-                <li><strong>Mantener peso:</strong> Se mantienen las mismas calorías</li>
-                <li><strong>Ganar peso:</strong> Se añade un 15% a las calorías de mantenimiento</li>
-            </ul>
-            
-            <p>La distribución de macronutrientes propuesta (30% proteínas, 40% carbohidratos, 30% grasas) es adecuada para la mayoría de las personas, pero puede ajustarse según necesidades específicas.</p>
-            
-            <img src="https://tdeecalculator.net/assets/images/macro-calculator-form.png" alt="Imagen de referencia para distribución de macros" class="reference-image">
-            
-            <p><strong>Nota importante:</strong> Esta calculadora proporciona estimaciones generales. Para un plan nutricional personalizado, consulta con un profesional de la salud o un nutricionista.</p>
-        </div>
-        
-        <div class="footer">
-            <p>© 2025 Calculadora de Calorías | Desarrollado por Nutrición y Salud</p>
         </div>
     </div>
-    
+
+    <div class="container">
+        <!-- Filtro de mes -->
+        <div class="row mb-4">
+            <div class="col-md-4 offset-md-4">
+                <div class="card month-filter">
+                    <div class="card-body">
+                        <label for="monthSelect" class="form-label">Filtrar por Mes:</label>
+                        <select id="monthSelect" class="form-select">
+                            <option value="all">Todos los meses</option>
+                            <!-- Opciones de meses se llenarán dinámicamente -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Buscador -->
+        <div class="row mb-4">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Buscar por SKU o nombre del producto">
+                            <button class="btn btn-primary" type="button" id="searchButton">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+                        <div id="searchResults" class="list-group hidden">
+                            <!-- Resultados de búsqueda aparecerán aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen del inventario -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Stock Físico</h5>
+                        <h2 class="display-4" id="stockFisico">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">Reposición Necesaria</h5>
+                        <h2 class="display-4" id="reposicionNecesaria">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Recomendación</h5>
+                        <h2 class="display-4" id="recomendacionTotal">-</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Producto (inicialmente oculta) -->
+        <div id="productInfo" class="fade-in hidden">
+            <div class="row">
+                <!-- Detalles del Producto -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Detalles del Producto</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Imagen del Producto -->
+                            <div class="product-image-container">
+                                <img id="productImage" src="" alt="Imagen del producto" class="product-image img-fluid mb-3">
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">SKU:</div>
+                                <div class="col-8" id="productSKU"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Nombre:</div>
+                                <div class="col-8" id="productName"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Stock Odoo:</div>
+                                <div class="col-8" id="productStockOdoo"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Stock Físico:</div>
+                                <div class="col-8" id="productStockFisico"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Venta Diaria:</div>
+                                <div class="col-8" id="productVentaDiaria"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Venta Semanal:</div>
+                                <div class="col-8" id="productVentaSemanal"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">% Venta Semanal:</div>
+                                <div class="col-8" id="productPorcentajeVenta"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Reposición Necesaria:</div>
+                                <div class="col-8" id="productReposicion"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Recomendación:</div>
+                                <div class="col-8" id="productRecomendacion"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Fecha de Registro:</div>
+                                <div class="col-8" id="productFecha"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Análisis de tendencia -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Análisis de Tendencia</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="trendGraph" class="trend-graph">
+                                <canvas id="salesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recomendaciones -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Análisis y Recomendaciones</h5>
+                        </div>
+                        <div class="card-body">
+                            <p id="analysisText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botón para volver a la búsqueda -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button id="backButton" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver a la búsqueda
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Carga inicial -->
+        <div id="loadingIndicator" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando datos del inventario...</p>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Sistema de Búsqueda de Inventario</h5>
+                    <p>Esta aplicación se conecta con Google Sheets a través de Apps Script.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p>© 2025 - Todos los derechos reservados</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
-        function openTab(evt, tabName) {
-            const tabContents = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < tabContents.length; i++) {
-                tabContents[i].classList.remove("active");
+        // URL del Apps Script Web App
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyl5zhK0DJTQI44AtkH6gG1JrEuRU5aosjA1ePk00Q3QL2hJx7o6HGC7eSzTDkMxbWt/exec';
+
+        // Variables globales para almacenar datos
+        let inventarioData = [];
+        let months = [];
+        let filteredData = [];
+        let currentMonth = 'all';
+
+        // Función para manejar valores seguros y redondearlos
+        function safeNumber(value, defaultValue = 0) {
+            if (value === null || value === undefined || value === "" || value === "-") {
+                return defaultValue;
+            }
+            const num = parseFloat(value);
+            return isNaN(num) ? defaultValue : Math.round(num);
+        }
+
+        // Función para manejar cadenas de texto seguras
+        function safeString(value) {
+            if (value === null || value === undefined) {
+                return "";
+            }
+            return String(value);
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos del DOM
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const searchResults = document.getElementById('searchResults');
+            const productInfo = document.getElementById('productInfo');
+            const backButton = document.getElementById('backButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const monthSelect = document.getElementById('monthSelect');
+            
+            // Cargar datos con tiempo límite para evitar bloqueos
+            fetchDataWithTimeout();
+            
+            // Configurar evento para filtro de mes
+            monthSelect.addEventListener('change', function() {
+                currentMonth = this.value;
+                applyMonthFilter();
+                updateDashboardSummary();
+            });
+            
+            // Configurar eventos de búsqueda
+            searchButton.addEventListener('click', performSearch);
+            searchInput.addEventListener('input', function() {
+                if (searchInput.value.length >= 2) {
+                    performSearch();
+                } else {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Botón para volver
+            backButton.addEventListener('click', function() {
+                productInfo.classList.add('hidden');
+                searchInput.focus();
+            });
+            
+            // Cerrar resultados al hacer clic fuera
+            document.addEventListener('click', function(event) {
+                if (!searchResults.contains(event.target) && event.target !== searchInput) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+        });
+
+        // Cargar datos con tiempo límite para evitar carga infinita
+        function fetchDataWithTimeout() {
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Tiempo de espera agotado')), 30000); // 30 segundos de tiempo límite
+            });
+            
+            const fetchPromise = fetch(APPS_SCRIPT_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta: ' + response.statusText);
+                    }
+                    return response.json();
+                });
+            
+            Promise.race([fetchPromise, timeoutPromise])
+                .then(data => {
+                    // Guardar datos
+                    if (data.inventario) {
+                        inventarioData = data.inventario;
+                        console.log('Datos de Inventario cargados:', inventarioData.length, 'registros');
+                        
+                        // Inicializar datos filtrados con todos los datos
+                        filteredData = [...inventarioData];
+                    }
+                    
+                    if (data.months) {
+                        months = data.months;
+                        populateMonthSelect();
+                    }
+                    
+                    // Actualizar dashboard
+                    updateDashboardSummary();
+                    
+                    // Mostrar fecha de la última actualización
+                    if (data.lastDate) {
+                        document.getElementById('lastUpdated').textContent = new Date(data.lastDate).toLocaleDateString();
+                    }
+                    
+                    // Ocultar indicador de carga
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error al cargar datos:', error);
+                    // Ocultar indicador de carga
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                    
+                    // Mostrar mensaje de error
+                    alert('Error al cargar datos del inventario: ' + error.message);
+                });
+        }
+
+        // Poblar el selector de meses
+        function populateMonthSelect() {
+            const monthSelect = document.getElementById('monthSelect');
+            // Limpiar opciones existentes excepto "Todos los meses"
+            while (monthSelect.options.length > 1) {
+                monthSelect.remove(1);
             }
             
-            const tabs = document.getElementsByClassName("tab");
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove("active");
+            // Agregar nuevas opciones
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+        }
+
+        // Aplicar filtro por mes
+        function applyMonthFilter() {
+            if (currentMonth === 'all') {
+                filteredData = [...inventarioData];
+            } else {
+                filteredData = inventarioData.filter(item => item.Mes === currentMonth);
             }
             
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+            // Actualizar la interfaz
+            updateDashboardSummary();
         }
         
-        function calcularCalorias() {
-            // Obtener valores del formulario
-            const sexo = document.getElementById("sexo").value;
-            const edad = parseFloat(document.getElementById("edad").value);
-            const peso = parseFloat(document.getElementById("peso").value);
-            const altura = parseFloat(document.getElementById("altura").value);
-            const nivelActividad = parseFloat(document.getElementById("actividad").value);
-            const objetivo = document.getElementById("objetivo").value;
+        // Actualizar resumen del dashboard
+        function updateDashboardSummary() {
+            // Encontrar la última fecha en los datos filtrados
+            let lastDate = null;
             
-            // Validar entradas
-            if (isNaN(edad) || isNaN(peso) || isNaN(altura)) {
-                alert("Por favor, completa todos los campos con valores numéricos válidos.");
+            filteredData.forEach(item => {
+                if (item.Fecha && (!lastDate || new Date(item.Fecha) > new Date(lastDate))) {
+                    lastDate = item.Fecha;
+                }
+            });
+            
+            // Filtrar por la última fecha
+            const lastDateData = filteredData.filter(item => item.Fecha === lastDate);
+            
+            // Calcular totales para la última fecha
+            let totalStockFisico = 0;
+            let totalReposicionNecesaria = 0;
+            let recomendacionCount = 0;
+            
+            lastDateData.forEach(item => {
+                totalStockFisico += safeNumber(item.StockFisico);
+                totalReposicionNecesaria += safeNumber(item.ReposicionNecesaria);
+                
+                // Verificación segura para la recomendación
+                const recomendacion = safeString(item.Recomendacion);
+                if (recomendacion && recomendacion.trim() !== '') {
+                    recomendacionCount++;
+                }
+            });
+            
+            // Actualizar la interfaz con valores redondeados
+            document.getElementById('stockFisico').textContent = Math.round(totalStockFisico);
+            document.getElementById('reposicionNecesaria').textContent = Math.round(totalReposicionNecesaria);
+            document.getElementById('recomendacionTotal').textContent = recomendacionCount;
+        }
+
+        // Realizar búsqueda
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const query = searchInput.value.trim().toUpperCase();
+            
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
                 return;
             }
             
-            // Calcular TMB (Tasa Metabólica Basal) usando la fórmula de Harris-Benedict
-            let tmb;
-            if (sexo === "hombre") {
-                tmb = 66.5 + (13.75 * peso) + (5.003 * altura) - (6.75 * edad);
-            } else {
-                tmb = 655.1 + (9.563 * peso) + (1.850 * altura) - (4.676 * edad);
-            }
+            // Encontrar la última fecha para cada SKU para evitar duplicados
+            const latestProducts = {};
             
-            // Calcular calorías de mantenimiento según nivel de actividad
-            const mantenimiento = tmb * nivelActividad;
+            filteredData.forEach(item => {
+                const sku = safeString(item.SKU);
+                if (!latestProducts[sku] || new Date(item.Fecha) > new Date(latestProducts[sku].Fecha)) {
+                    latestProducts[sku] = item;
+                }
+            });
             
-            // Ajustar calorías según objetivo
-            let caloriasFinal;
-            switch (objetivo) {
-                case "perder":
-                    caloriasFinal = mantenimiento * 0.8; // Déficit del 20%
-                    break;
-                case "mantener":
-                    caloriasFinal = mantenimiento;
-                    break;
-                case "ganar":
-                    caloriasFinal = mantenimiento * 1.15; // Superávit del 15%
-                    break;
-                default:
-                    caloriasFinal = mantenimiento;
-            }
-            
-            // Calcular macronutrientes (distribución 30% proteínas, 40% carbohidratos, 30% grasas)
-            const proteinasCal = caloriasFinal * 0.3;
-            const carbosCal = caloriasFinal * 0.4;
-            const grasasCal = caloriasFinal * 0.3;
-            
-            const proteinasG = proteinasCal / 4; // 4 calorías por gramo de proteína
-            const carbosG = carbosCal / 4; // 4 calorías por gramo de carbohidrato
-            const grasasG = grasasCal / 9; // 9 calorías por gramo de grasa
+            // Convertir a array y filtrar por búsqueda
+            const latestProductsArray = Object.values(latestProducts);
+            const results = latestProductsArray.filter(item => 
+                (safeString(item.SKU).toUpperCase().includes(query)) || 
+                (safeString(item.Producto).toUpperCase().includes(query))
+            );
             
             // Mostrar resultados
-            document.getElementById("tmb").textContent = Math.round(tmb);
-            document.getElementById("mantenimiento").textContent = Math.round(mantenimiento);
-            document.getElementById("objetivo-calorias").textContent = Math.round(caloriasFinal);
+            searchResults.innerHTML = '';
             
-            document.getElementById("proteinas-g").textContent = Math.round(proteinasG) + "g";
-            document.getElementById("carbos-g").textContent = Math.round(carbosG) + "g";
-            document.getElementById("grasas-g").textContent = Math.round(grasasG) + "g";
+            if (results.length > 0) {
+                results.forEach(item => {
+                    const resultItem = document.createElement('a');
+                    resultItem.className = 'list-group-item result-item';
+                    resultItem.innerHTML = `<strong>${safeString(item.SKU)}</strong> - ${safeString(item.Producto)}`;
+                    resultItem.addEventListener('click', function() {
+                        displayProductInfo(item.SKU);
+                        searchResults.classList.add('hidden');
+                        searchInput.value = item.SKU; // Colocar el SKU en el campo de búsqueda
+                    });
+                    searchResults.appendChild(resultItem);
+                });
+                searchResults.classList.remove('hidden');
+            } else {
+                searchResults.innerHTML = '<a class="list-group-item">No se encontraron resultados</a>';
+                searchResults.classList.remove('hidden');
+            }
+        }
+
+        // Mostrar información del producto
+        function displayProductInfo(sku) {
+            // Filtrar datos del producto por SKU
+            const productData = filteredData.filter(item => safeString(item.SKU) === safeString(sku));
             
-            document.getElementById("proteinas-cal").textContent = Math.round(proteinasCal) + " cal";
-            document.getElementById("carbos-cal").textContent = Math.round(carbosCal) + " cal";
-            document.getElementById("grasas-cal").textContent = Math.round(grasasCal) + " cal";
+            if (productData.length === 0) {
+                alert('Producto no encontrado');
+                return;
+            }
             
-            // Mostrar sección de resultados
-            document.getElementById("resultados").style.display = "block";
+            // Ordenar por fecha para obtener el más reciente
+            productData.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+            const latestProduct = productData[0];
+            
+            // Mostrar sección de información del producto
+            document.getElementById('productInfo').classList.remove('hidden');
+            
+            // Llenar datos del producto con valores redondeados
+            document.getElementById('productSKU').textContent = safeString(latestProduct.SKU);
+            document.getElementById('productName').textContent = safeString(latestProduct.Producto);
+            document.getElementById('productStockOdoo').textContent = safeNumber(latestProduct.StockOdoo);
+            document.getElementById('productStockFisico').textContent = safeNumber(latestProduct.StockFisico);
+            document.getElementById('productVentaDiaria').textContent = safeNumber(latestProduct.VentaDiaria);
+            document.getElementById('productVentaSemanal').textContent = safeNumber(latestProduct.VentaSemanal);
+            document.getElementById('productPorcentajeVenta').textContent = `${safeNumber(latestProduct.PorcentajeVentaSemanal)}%`;
+            document.getElementById('productReposicion').textContent = safeNumber(latestProduct.ReposicionNecesaria);
+            document.getElementById('productRecomendacion').textContent = safeString(latestProduct.Recomendacion);
+            document.getElementById('productFecha').textContent = latestProduct.Fecha ? new Date(latestProduct.Fecha).toLocaleDateString() : '';
+            
+            // Imagen del producto
+            const productImage = document.getElementById('productImage');
+            if (latestProduct.ImagenReferencia && latestProduct.ImagenReferencia.trim() !== '') {
+                productImage.src = latestProduct.ImagenReferencia;
+                productImage.parentElement.classList.remove('hidden');
+            } else {
+                productImage.src = '';
+                productImage.parentElement.classList.add('hidden');
+            }
+            
+            // Actualizar gráfico de tendencia
+            updateTrendChart(sku);
+            
+            // Generar texto de análisis
+            generateAnalysisText(sku, productData);
+            
+            // Hacer scroll al detalle del producto
+            document.getElementById('productInfo').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Actualizar gráfico de tendencia
+        function updateTrendChart(sku) {
+            // Filtrar datos del producto por SKU
+            const productData = filteredData.filter(item => safeString(item.SKU) === safeString(sku));
+            
+            if (productData.length === 0) {
+                return;
+            }
+            
+            // Ordenar por fecha (ascendente)
+            productData.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+            
+            // Preparar datos para el gráfico (con valores redondeados)
+            const labels = productData.map(item => `Sem ${item.Semana}`);
+            const ventaSemanalData = productData.map(item => safeNumber(item.VentaSemanal));
+            const stockFisicoData = productData.map(item => safeNumber(item.StockFisico));
+            
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            // Verificar si ya existe un gráfico y destruirlo
+            if (window.salesChart) {
+                window.salesChart.destroy();
+            }
+            
+            // Crear nuevo gráfico
+            window.salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Venta Semanal',
+                            data: ventaSemanalData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Stock Físico',
+                            data: stockFisicoData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Generar texto de análisis
+        function generateAnalysisText(sku, productData) {
+            if (productData.length === 0) {
+                return;
+            }
+            
+            // Ordenar por fecha (descendente) para obtener el más reciente
+            productData.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+            const latestProduct = productData[0];
+            
+            // Calcular tendencia
+            let trend = 'estable';
+            if (productData.length > 1) {
+                const lastTwoData = productData.slice(0, 2);
+                const currentSales = safeNumber(lastTwoData[0].VentaSemanal);
+                const previousSales = safeNumber(lastTwoData[1].VentaSemanal);
+                
+                if (currentSales > previousSales) {
+                    trend = 'al alza';
+                } else if (currentSales < previousSales) {
+                    trend = 'a la baja';
+                }
+            }
+            
+            // Generar texto de análisis con valores redondeados
+            let analysisText = `
+                El producto ${safeString(latestProduct.SKU)} (${safeString(latestProduct.Producto)}) muestra una tendencia de ventas ${trend}.
+                La venta semanal es de ${safeNumber(latestProduct.VentaSemanal)} unidades, lo que representa un ${safeNumber(latestProduct.PorcentajeVentaSemanal)}% del total.
+                El stock físico actual es de ${safeNumber(latestProduct.StockFisico)} unidades.
+            `;
+            
+            // Añadir recomendación si existe
+            const recomendacion = safeString(latestProduct.Recomendacion);
+            if (recomendacion && recomendacion.trim() !== '') {
+                analysisText += `\nRecomendación: ${recomendacion}`;
+            }
+            
+            // Añadir información sobre reposición
+            const reposicionNecesaria = safeNumber(latestProduct.ReposicionNecesaria);
+            if (reposicionNecesaria > 0) {
+                analysisText += `\nSe necesita reponer ${reposicionNecesaria} unidades.`;
+            }
+            
+            document.getElementById('analysisText').textContent = analysisText.trim();
         }
     </script>
 </body>
