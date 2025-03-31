@@ -72,6 +72,9 @@
             padding: 20px 0;
             margin-top: 30px;
         }
+        .month-filter {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -90,6 +93,21 @@
     </div>
 
     <div class="container">
+        <!-- Filtro de mes -->
+        <div class="row mb-4">
+            <div class="col-md-4 offset-md-4">
+                <div class="card month-filter">
+                    <div class="card-body">
+                        <label for="monthSelect" class="form-label">Filtrar por Mes:</label>
+                        <select id="monthSelect" class="form-select">
+                            <option value="all">Todos los meses</option>
+                            <!-- Opciones de meses se llenarán dinámicamente -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Buscador -->
         <div class="row mb-4">
             <div class="col-md-8 offset-md-2">
@@ -114,24 +132,24 @@
             <div class="col-md-4">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Total de Productos</h5>
-                        <h2 class="display-4" id="totalProducts">-</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">Stock Disponible</h5>
-                        <h2 class="display-4" id="availableStock">-</h2>
+                        <h5 class="card-title">Stock Físico</h5>
+                        <h2 class="display-4" id="stockFisico">-</h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card bg-warning text-dark">
                     <div class="card-body">
-                        <h5 class="card-title">Necesitan Reposición</h5>
-                        <h2 class="display-4" id="lowStockProducts">-</h2>
+                        <h5 class="card-title">Reposición Necesaria</h5>
+                        <h2 class="display-4" id="reposicionNecesaria">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Recomendación</h5>
+                        <h2 class="display-4" id="recomendacionTotal">-</h2>
                     </div>
                 </div>
             </div>
@@ -156,92 +174,45 @@
                                 <div class="col-8" id="productName"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Empresa:</div>
-                                <div class="col-8" id="productEmpresa"></div>
+                                <div class="col-4 fw-bold">Stock Odoo:</div>
+                                <div class="col-8" id="productStockOdoo"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Marca:</div>
-                                <div class="col-8" id="productBrand"></div>
+                                <div class="col-4 fw-bold">Stock Físico:</div>
+                                <div class="col-8" id="productStockFisico"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Fecha Registro:</div>
-                                <div class="col-8" id="productFechaRegistro"></div>
+                                <div class="col-4 fw-bold">Venta Diaria:</div>
+                                <div class="col-8" id="productVentaDiaria"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Código de Barra:</div>
-                                <div class="col-8" id="productCodigoBarra"></div>
+                                <div class="col-4 fw-bold">Venta Semanal:</div>
+                                <div class="col-8" id="productVentaSemanal"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Categoría:</div>
-                                <div class="col-8" id="productCategoria"></div>
+                                <div class="col-4 fw-bold">% Venta Semanal:</div>
+                                <div class="col-8" id="productPorcentajeVenta"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Costo Promedio:</div>
-                                <div class="col-8" id="productCostoPromedio"></div>
+                                <div class="col-4 fw-bold">Reposición Necesaria:</div>
+                                <div class="col-8" id="productReposicion"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Stock Inicial:</div>
-                                <div class="col-8" id="initialStock"></div>
+                                <div class="col-4 fw-bold">Recomendación:</div>
+                                <div class="col-8" id="productRecomendacion"></div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-4 fw-bold">Stock Actual:</div>
-                                <div class="col-8" id="currentStock"></div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-4 fw-bold">Disponibilidad:</div>
-                                <div class="col-8">
-                                    <div class="progress">
-                                        <div id="stockProgress" class="progress-bar" role="progressbar"></div>
-                                    </div>
-                                </div>
+                                <div class="col-4 fw-bold">Fecha de Registro:</div>
+                                <div class="col-8" id="productFecha"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Imagen del Producto -->
+                <!-- Análisis de tendencia -->
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-info text-white">
-                            <h5 class="mb-0">Imagen del Producto</h5>
-                        </div>
-                        <div class="card-body text-center">
-                            <a id="productImageLink" href="#" target="_blank">
-                                <img id="productImage" class="product-image img-fluid" src="/api/placeholder/400/320" alt="Imagen del producto">
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Análisis de Ventas -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0">Resumen de Ventas</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row mb-2">
-                                <div class="col-6 fw-bold">Total Vendido:</div>
-                                <div class="col-6" id="totalSold"></div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-6 fw-bold">Porcentaje Vendido:</div>
-                                <div class="col-6">
-                                    <span id="soldPercentage"></span>
-                                    <div class="progress mt-1">
-                                        <div id="soldProgress" class="progress-bar bg-success" role="progressbar"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-warning text-dark">
                             <h5 class="mb-0">Análisis de Tendencia</h5>
                         </div>
                         <div class="card-body">
@@ -306,12 +277,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
         // URL del Apps Script Web App
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbgymW6pN6TtSAs5YUmSOeQhmY9t8t8HmvvaCvsKsoMYq5pSHYlOnVJBO5FgiiHr4CCA/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyl5zhK0DJTQI44AtkH6gG1JrEuRU5aosjA1ePk00Q3QL2hJx7o6HGC7eSzTDkMxbWt/exec';
 
         // Variables globales para almacenar datos
-        let hStockData = [];
-        let inventarioAlphaData = [];
-        let salesData = [];
+        let inventarioData = [];
+        let months = [];
+        let filteredData = [];
+        let currentMonth = 'all';
 
         // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', function() {
@@ -322,9 +294,17 @@
             const productInfo = document.getElementById('productInfo');
             const backButton = document.getElementById('backButton');
             const loadingIndicator = document.getElementById('loadingIndicator');
+            const monthSelect = document.getElementById('monthSelect');
             
             // Cargar datos con tiempo límite para evitar bloqueos
             fetchDataWithTimeout();
+            
+            // Configurar evento para filtro de mes
+            monthSelect.addEventListener('change', function() {
+                currentMonth = this.value;
+                applyMonthFilter();
+                updateDashboardSummary();
+            });
             
             // Configurar eventos de búsqueda
             searchButton.addEventListener('click', performSearch);
@@ -372,21 +352,26 @@
             Promise.race([fetchPromise, timeoutPromise])
                 .then(data => {
                     // Guardar datos
-                    if (data.hStock) {
-                        hStockData = data.hStock;
-                        console.log('Datos de H.Stock cargados:', hStockData.length, 'registros');
-                    }
-                    
                     if (data.inventario) {
-                        inventarioAlphaData = data.inventario;
-                        console.log('Datos de InventarioAlpha cargados:', inventarioAlphaData.length, 'registros');
+                        inventarioData = data.inventario;
+                        console.log('Datos de Inventario cargados:', inventarioData.length, 'registros');
+                        
+                        // Inicializar datos filtrados con todos los datos
+                        filteredData = [...inventarioData];
                     }
                     
-                    // Generar datos de ventas basados en el inventario
-                    generateSalesData();
+                    if (data.months) {
+                        months = data.months;
+                        populateMonthSelect();
+                    }
                     
                     // Actualizar dashboard
                     updateDashboardSummary();
+                    
+                    // Mostrar fecha de la última actualización
+                    if (data.lastDate) {
+                        document.getElementById('lastUpdated').textContent = new Date(data.lastDate).toLocaleDateString();
+                    }
                     
                     // Ocultar indicador de carga
                     document.getElementById('loadingIndicator').classList.add('hidden');
@@ -401,56 +386,66 @@
                 });
         }
 
-        // Generar datos de ventas basados en el inventario
-        function generateSalesData() {
-            salesData = [];
+        // Poblar el selector de meses
+        function populateMonthSelect() {
+            const monthSelect = document.getElementById('monthSelect');
+            // Limpiar opciones existentes excepto "Todos los meses"
+            while (monthSelect.options.length > 1) {
+                monthSelect.remove(1);
+            }
             
-            hStockData.forEach(product => {
-                const sku = product.SKU || '';
-                if (!sku) return;
-                
-                // Usar stock inicial predeterminado de 100 si no está definido
-                const initialStock = parseInt(product['Stock Inicial'] || 100);
-                
-                // Buscar stock actual en InventarioAlpha
-                const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
-                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
-                
-                const totalSold = initialStock - currentStock;
-                
-                // Distribuir ventas en semanas (simulación)
-                const week1 = Math.floor(totalSold * 0.4);
-                const week2 = Math.floor(totalSold * 0.3);
-                const week3 = totalSold - week1 - week2;
-                
-                salesData.push({ sku, week1, week2, week3 });
+            // Agregar nuevas opciones
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                monthSelect.appendChild(option);
             });
+        }
+
+        // Aplicar filtro por mes
+        function applyMonthFilter() {
+            if (currentMonth === 'all') {
+                filteredData = [...inventarioData];
+            } else {
+                filteredData = inventarioData.filter(item => item.Mes === currentMonth);
+            }
+            
+            // Actualizar la interfaz
+            updateDashboardSummary();
         }
         
         // Actualizar resumen del dashboard
         function updateDashboardSummary() {
-            document.getElementById('totalProducts').textContent = hStockData.length;
+            // Encontrar la última fecha en los datos filtrados
+            let lastDate = null;
             
-            // Calcular productos con stock suficiente (>50%)
-            const stockOkCount = hStockData.filter(item => {
-                const initialStock = parseInt(item['Stock Inicial'] || 100);
-                if (initialStock === 0) return false;
-                
-                // Buscar stock actual en InventarioAlpha
-                const inventoryInfo = inventarioAlphaData.find(inv => inv.Codigo === item.SKU);
-                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
-                
-                return (currentStock / initialStock) * 100 > 50;
-            }).length;
+            filteredData.forEach(item => {
+                if (item.Fecha && (!lastDate || new Date(item.Fecha) > new Date(lastDate))) {
+                    lastDate = item.Fecha;
+                }
+            });
             
-            // Calcular productos con stock bajo (<50%)
-            const lowStockCount = hStockData.length - stockOkCount;
+            // Filtrar por la última fecha
+            const lastDateData = filteredData.filter(item => item.Fecha === lastDate);
             
-            document.getElementById('availableStock').textContent = stockOkCount;
-            document.getElementById('lowStockProducts').textContent = lowStockCount;
+            // Calcular totales para la última fecha
+            let totalStockFisico = 0;
+            let totalReposicionNecesaria = 0;
+            let recomendacionCount = 0;
             
-            // Actualizar fecha
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
+            lastDateData.forEach(item => {
+                totalStockFisico += parseFloat(item.StockFisico) || 0;
+                totalReposicionNecesaria += parseFloat(item.ReposicionNecesaria) || 0;
+                if (item.Recomendacion && item.Recomendacion.trim() !== '') {
+                    recomendacionCount++;
+                }
+            });
+            
+            // Actualizar la interfaz
+            document.getElementById('stockFisico').textContent = totalStockFisico.toFixed(0);
+            document.getElementById('reposicionNecesaria').textContent = totalReposicionNecesaria.toFixed(0);
+            document.getElementById('recomendacionTotal').textContent = recomendacionCount;
         }
 
         // Realizar búsqueda
@@ -464,10 +459,21 @@
                 return;
             }
             
-            // Filtrar productos que coincidan con la búsqueda en SKU (col G) o Nombre (col H)
-            const results = hStockData.filter(item => 
+            // Encontrar la última fecha para cada SKU para evitar duplicados
+            const latestProducts = {};
+            
+            filteredData.forEach(item => {
+                const sku = item.SKU;
+                if (!latestProducts[sku] || new Date(item.Fecha) > new Date(latestProducts[sku].Fecha)) {
+                    latestProducts[sku] = item;
+                }
+            });
+            
+            // Convertir a array y filtrar por búsqueda
+            const latestProductsArray = Object.values(latestProducts);
+            const results = latestProductsArray.filter(item => 
                 (item.SKU && item.SKU.toString().toUpperCase().includes(query)) || 
-                (item.Nombre && item.Nombre.toString().toUpperCase().includes(query))
+                (item.Producto && item.Producto.toString().toUpperCase().includes(query))
             );
             
             // Mostrar resultados
@@ -477,7 +483,7 @@
                 results.forEach(item => {
                     const resultItem = document.createElement('a');
                     resultItem.className = 'list-group-item result-item';
-                    resultItem.innerHTML = `<strong>${item.SKU || ''}</strong> - ${item.Nombre || ''} (${item.Marca || ''})`;
+                    resultItem.innerHTML = `<strong>${item.SKU || ''}</strong> - ${item.Producto || ''}`;
                     resultItem.addEventListener('click', function() {
                         displayProductInfo(item.SKU);
                         searchResults.classList.add('hidden');
@@ -494,81 +500,38 @@
 
         // Mostrar información del producto
         function displayProductInfo(sku) {
-            // Buscar el producto en H.Stock por SKU
-            const product = hStockData.find(item => item.SKU === sku);
+            // Filtrar datos del producto por SKU
+            const productData = filteredData.filter(item => item.SKU === sku);
             
-            if (!product) {
+            if (productData.length === 0) {
                 alert('Producto no encontrado');
                 return;
             }
             
-            // Buscar stock en InventarioAlpha por código
-            const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
-            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
+            // Ordenar por fecha para obtener el más reciente
+            productData.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+            const latestProduct = productData[0];
             
             // Mostrar sección de información del producto
             document.getElementById('productInfo').classList.remove('hidden');
             
             // Llenar datos del producto
-            document.getElementById('productSKU').textContent = product.SKU || '';
-            document.getElementById('productName').textContent = product.Nombre || '';
-            document.getElementById('productEmpresa').textContent = product.Empresa || '';
-            document.getElementById('productBrand').textContent = product.Marca || '';
-            document.getElementById('productFechaRegistro').textContent = product.FechaRegistro || '';
-            document.getElementById('productCodigoBarra').textContent = product.CodigoBarra || '';
-            document.getElementById('productCategoria').textContent = product.Categoria || '';
-            document.getElementById('productCostoPromedio').textContent = `$${product.CostoPromedio || '0'}`;
-            document.getElementById('initialStock').textContent = `${product['Stock Inicial'] || 100} unidades`;
-            document.getElementById('currentStock').textContent = `${currentStock} unidades`;
+            document.getElementById('productSKU').textContent = latestProduct.SKU || '';
+            document.getElementById('productName').textContent = latestProduct.Producto || '';
+            document.getElementById('productStockOdoo').textContent = latestProduct.StockOdoo || '0';
+            document.getElementById('productStockFisico').textContent = latestProduct.StockFisico || '0';
+            document.getElementById('productVentaDiaria').textContent = latestProduct.VentaDiaria || '0';
+            document.getElementById('productVentaSemanal').textContent = latestProduct.VentaSemanal || '0';
+            document.getElementById('productPorcentajeVenta').textContent = `${latestProduct.PorcentajeVentaSemanal || '0'}%`;
+            document.getElementById('productReposicion').textContent = latestProduct.ReposicionNecesaria || '0';
+            document.getElementById('productRecomendacion').textContent = latestProduct.Recomendacion || '';
+            document.getElementById('productFecha').textContent = latestProduct.Fecha ? new Date(latestProduct.Fecha).toLocaleDateString() : '';
             
-            // Calcular porcentaje de stock y ventas
-            const initialStock = parseInt(product['Stock Inicial'] || 100);
-            const stockPercentage = initialStock > 0 ? (currentStock / initialStock) * 100 : 0;
-            const soldUnits = initialStock - currentStock;
-            const soldPercentage = initialStock > 0 ? (soldUnits / initialStock) * 100 : 0;
-            
-            // Actualizar barras de progreso
-            const stockProgress = document.getElementById('stockProgress');
-            stockProgress.style.width = `${stockPercentage}%`;
-            stockProgress.textContent = `${Math.round(stockPercentage)}%`;
-            
-            // Cambiar color según nivel de stock
-            if (stockPercentage > 50) {
-                stockProgress.className = 'progress-bar bg-success';
-            } else if (stockPercentage > 25) {
-                stockProgress.className = 'progress-bar bg-warning';
-            } else {
-                stockProgress.className = 'progress-bar bg-danger';
-            }
-            
-            // Actualizar resumen de ventas
-            document.getElementById('totalSold').textContent = `${soldUnits} unidades`;
-            document.getElementById('soldPercentage').textContent = `${Math.round(soldPercentage)}%`;
-            
-            const soldProgress = document.getElementById('soldProgress');
-            soldProgress.style.width = `${soldPercentage}%`;
-            soldProgress.textContent = `${Math.round(soldPercentage)}%`;
-            
-            // Actualizar imagen del producto y enlace
-            const productImage = document.getElementById('productImage');
-            const productImageLink = document.getElementById('productImageLink');
-            
-            if (product.Link && product.Link.trim() !== '') {
-                productImage.src = product.Link;
-                productImageLink.href = product.Link;
-            } else {
-                productImage.src = '/api/placeholder/400/320';
-                productImageLink.href = '#';
-            }
-            
-            // Obtener datos de ventas para el gráfico
-            const salesInfo = salesData.find(item => item.sku === sku) || { sku, week1: 0, week2: 0, week3: 0 };
-            
-            // Actualizar gráfico de ventas
-            updateSalesChart(salesInfo);
+            // Actualizar gráfico de tendencia
+            updateTrendChart(sku);
             
             // Generar texto de análisis
-            generateAnalysisText(sku, salesInfo);
+            generateAnalysisText(sku, productData);
             
             // Hacer scroll al detalle del producto
             document.getElementById('productInfo').scrollIntoView({
@@ -577,8 +540,23 @@
             });
         }
 
-        // Actualizar gráfico de ventas
-        function updateSalesChart(salesInfo) {
+        // Actualizar gráfico de tendencia
+        function updateTrendChart(sku) {
+            // Filtrar datos del producto por SKU
+            const productData = filteredData.filter(item => item.SKU === sku);
+            
+            if (productData.length === 0) {
+                return;
+            }
+            
+            // Ordenar por fecha (ascendente)
+            productData.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+            
+            // Preparar datos para el gráfico
+            const labels = productData.map(item => `Sem ${item.Semana}`);
+            const ventaSemanalData = productData.map(item => item.VentaSemanal || 0);
+            const stockFisicoData = productData.map(item => item.StockFisico || 0);
+            
             const ctx = document.getElementById('salesChart').getContext('2d');
             
             // Verificar si ya existe un gráfico y destruirlo
@@ -588,24 +566,27 @@
             
             // Crear nuevo gráfico
             window.salesChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: ['Semana 1', 'Semana 2', 'Semana 3'],
-                    datasets: [{
-                        label: 'Ventas semanales',
-                        data: [salesInfo.week1, salesInfo.week2, salesInfo.week3],
-                        backgroundColor: [
-                            'rgba(54, 162, 235, 0.6)',
-                            'rgba(54, 162, 235, 0.6)',
-                            'rgba(54, 162, 235, 0.6)'
-                        ],
-                        borderColor: [
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(54, 162, 235, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Venta Semanal',
+                            data: ventaSemanalData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Stock Físico',
+                            data: stockFisicoData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        }
+                    ]
                 },
                 options: {
                     scales: {
@@ -620,51 +601,42 @@
         }
 
         // Generar texto de análisis
-        function generateAnalysisText(sku, salesInfo) {
-            const product = hStockData.find(item => item.SKU === sku);
-            
-            if (!product) {
+        function generateAnalysisText(sku, productData) {
+            if (productData.length === 0) {
                 return;
             }
             
-            // Obtener datos actuales de inventario
-            const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
-            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
-            const initialStock = parseInt(product['Stock Inicial'] || 100);
+            // Ordenar por fecha (descendente) para obtener el más reciente
+            productData.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha));
+            const latestProduct = productData[0];
             
             // Calcular tendencia
-            let trend = '';
-            if (salesInfo.week3 > salesInfo.week2) {
-                trend = 'al alza';
-            } else if (salesInfo.week3 < salesInfo.week2) {
-                trend = 'a la baja';
-            } else {
-                trend = 'estable';
+            let trend = 'estable';
+            if (productData.length > 1) {
+                const lastTwoData = productData.slice(0, 2);
+                if (lastTwoData[0].VentaSemanal > lastTwoData[1].VentaSemanal) {
+                    trend = 'al alza';
+                } else if (lastTwoData[0].VentaSemanal < lastTwoData[1].VentaSemanal) {
+                    trend = 'a la baja';
+                }
             }
             
-            // Calcular stock restante
-            const remainingPercentage = initialStock > 0 ? (currentStock / initialStock) * 100 : 0;
-            let stockStatus = '';
-            let recommendation = '';
-            
-            if (remainingPercentage < 25) {
-                stockStatus = 'crítico';
-                recommendation = 'Se recomienda reabastecer urgentemente.';
-            } else if (remainingPercentage < 50) {
-                stockStatus = 'bajo';
-                recommendation = 'Se recomienda planificar reabastecimiento pronto.';
-            } else {
-                stockStatus = 'adecuado';
-                recommendation = 'El stock es suficiente para la demanda actual.';
-            }
-            
-            // Generar texto completo
-            const analysisText = `
-                La venta del producto ${product.SKU || ''} (${product.Nombre || ''}) muestra una tendencia ${trend} 
-                con ${salesInfo.week2} unidades vendidas en la Semana 2 y ${salesInfo.week3} unidades en la Semana 3.
-                El nivel de stock actual es ${stockStatus} (${currentStock} unidades, ${Math.round(remainingPercentage)}% del inicial).
-                ${recommendation}
+            // Generar texto de análisis
+            let analysisText = `
+                El producto ${latestProduct.SKU} (${latestProduct.Producto}) muestra una tendencia de ventas ${trend}.
+                La venta semanal es de ${latestProduct.VentaSemanal || '0'} unidades, lo que representa un ${latestProduct.PorcentajeVentaSemanal || '0'}% del total.
+                El stock físico actual es de ${latestProduct.StockFisico || '0'} unidades.
             `;
+            
+            // Añadir recomendación si existe
+            if (latestProduct.Recomendacion && latestProduct.Recomendacion.trim() !== '') {
+                analysisText += `\nRecomendación: ${latestProduct.Recomendacion}`;
+            }
+            
+            // Añadir información sobre reposición
+            if (latestProduct.ReposicionNecesaria && parseFloat(latestProduct.ReposicionNecesaria) > 0) {
+                analysisText += `\nSe necesita reponer ${latestProduct.ReposicionNecesaria} unidades.`;
+            }
             
             document.getElementById('analysisText').textContent = analysisText.trim();
         }
