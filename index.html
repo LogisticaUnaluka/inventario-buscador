@@ -29,6 +29,7 @@
         .product-image {
             max-height: 300px;
             object-fit: contain;
+            cursor: pointer;
         }
         #searchResults {
             max-height: 300px;
@@ -95,7 +96,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="input-group mb-3">
-                            <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Buscar SKU: UL0xxxx">
+                            <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Buscar por SKU o nombre del producto">
                             <button class="btn btn-primary" type="button" id="searchButton">
                                 <i class="bi bi-search"></i> Buscar
                             </button>
@@ -205,7 +206,9 @@
                             <h5 class="mb-0">Imagen del Producto</h5>
                         </div>
                         <div class="card-body text-center">
-                            <img id="productImage" class="product-image img-fluid" src="/api/placeholder/400/320" alt="Imagen del producto">
+                            <a id="productImageLink" href="#" target="_blank">
+                                <img id="productImage" class="product-image img-fluid" src="/api/placeholder/400/320" alt="Imagen del producto">
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -302,7 +305,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
-        // URL del Apps Script Web App (ACTUALIZADA)
+        // URL del Apps Script Web App
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3PzXQRTO4UEu3k57aBs5Gzg9q63GMuj0YuTcBB3NvRDYRD4GBNVfpPoczlmbUk1kGBA/exec';
 
         // Variables globales para almacenar datos
@@ -320,13 +323,13 @@
             const backButton = document.getElementById('backButton');
             const loadingIndicator = document.getElementById('loadingIndicator');
             
-            // Cargar datos (usando una opción alternativa en caso de problemas con Apps Script)
+            // Cargar datos con tiempo límite para evitar bloqueos
             fetchDataWithTimeout();
             
             // Configurar eventos de búsqueda
             searchButton.addEventListener('click', performSearch);
             searchInput.addEventListener('input', function() {
-                if (searchInput.value.length >= 3) {
+                if (searchInput.value.length >= 2) {
                     performSearch();
                 } else {
                     searchResults.classList.add('hidden');
@@ -341,7 +344,6 @@
             // Botón para volver
             backButton.addEventListener('click', function() {
                 productInfo.classList.add('hidden');
-                searchInput.value = '';
                 searchInput.focus();
             });
             
@@ -356,7 +358,7 @@
         // Cargar datos con tiempo límite para evitar carga infinita
         function fetchDataWithTimeout() {
             const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Tiempo de espera agotado')), 10000);
+                setTimeout(() => reject(new Error('Tiempo de espera agotado')), 30000); // 30 segundos de tiempo límite
             });
             
             const fetchPromise = fetch(APPS_SCRIPT_URL)
@@ -391,14 +393,11 @@
                 })
                 .catch(error => {
                     console.error('Error al cargar datos:', error);
-                    // Cargar datos de ejemplo en caso de error
-                    loadSampleData();
-                    updateDashboardSummary();
                     // Ocultar indicador de carga
                     document.getElementById('loadingIndicator').classList.add('hidden');
                     
                     // Mostrar mensaje de error
-                    alert('No se pudieron cargar los datos del inventario. Se están usando datos de ejemplo.');
+                    alert('Error al cargar datos del inventario: ' + error.message);
                 });
         }
 
@@ -410,11 +409,12 @@
                 const sku = product.SKU || '';
                 if (!sku) return;
                 
-                const initialStock = parseInt(product['Stock Inicial'] || 0);
+                // Usar stock inicial predeterminado de 100 si no está definido
+                const initialStock = parseInt(product['Stock Inicial'] || 100);
                 
                 // Buscar stock actual en InventarioAlpha
                 const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
-                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(product['Stock Restante'] || 0);
+                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
                 
                 const totalSold = initialStock - currentStock;
                 
@@ -426,92 +426,6 @@
                 salesData.push({ sku, week1, week2, week3 });
             });
         }
-
-        // Cargar datos de ejemplo en caso de que falle la API
-        function loadSampleData() {
-            console.log('Cargando datos de ejemplo...');
-            
-            // Datos de muestra para H.Stock
-            hStockData = [
-                { 
-                    SKU: 'UL01400', 
-                    Nombre: 'Niacinamide', 
-                    Empresa: 'The Ordinary Co.',
-                    Marca: 'The Ordinary', 
-                    FechaRegistro: '2023-01-15',
-                    CodigoBarra: '5028463550115',
-                    Categoria: 'Skincare',
-                    CostoPromedio: '15.90',
-                    'Stock Inicial': '100', 
-                    'Stock Restante': '40',
-                    Link: 'https://m.media-amazon.com/images/I/61SJxY1fkPL.jpg'
-                },
-                { 
-                    SKU: 'UL01398', 
-                    Nombre: 'Hyaluronic Acid 2% + B5', 
-                    Empresa: 'The Ordinary Co.',
-                    Marca: 'The Ordinary', 
-                    FechaRegistro: '2023-01-20',
-                    CodigoBarra: '5028463550122',
-                    Categoria: 'Skincare',
-                    CostoPromedio: '12.50',
-                    'Stock Inicial': '120', 
-                    'Stock Restante': '35',
-                    Link: 'https://images.sephora.com/is/image/sku/2031375-RHLP01'
-                },
-                { 
-                    SKU: 'UL01500', 
-                    Nombre: 'Retinol 1%', 
-                    Empresa: 'The Ordinary Co.',
-                    Marca: 'The Ordinary', 
-                    FechaRegistro: '2023-02-10',
-                    CodigoBarra: '5028463550139',
-                    Categoria: 'Skincare',
-                    CostoPromedio: '18.75',
-                    'Stock Inicial': '80', 
-                    'Stock Restante': '25',
-                    Link: 'https://cdn.notinoimg.com/detail_thumb/the-ordinary/8057749433089_01/the-ordinary-retinol-1-in-squalane-serum-anti-rides-.jpg'
-                },
-                { 
-                    SKU: 'UL01600', 
-                    Nombre: 'Vitamin C Suspension', 
-                    Empresa: 'The Ordinary Co.',
-                    Marca: 'The Ordinary', 
-                    FechaRegistro: '2023-03-05',
-                    CodigoBarra: '5028463550146',
-                    Categoria: 'Skincare',
-                    CostoPromedio: '14.30',
-                    'Stock Inicial': '90', 
-                    'Stock Restante': '60',
-                    Link: 'https://cdn.notinoimg.com/detail_thumb/the-ordinary/8058664697173_01-o/the-ordinary-vitamin-c-suspension-serum-anti-rides-.jpg'
-                },
-                { 
-                    SKU: 'UL01700', 
-                    Nombre: 'Glycolic Acid 7% Toning Solution', 
-                    Empresa: 'The Ordinary Co.',
-                    Marca: 'The Ordinary', 
-                    FechaRegistro: '2023-03-15',
-                    CodigoBarra: '5028463550153',
-                    Categoria: 'Skincare',
-                    CostoPromedio: '16.80',
-                    'Stock Inicial': '70', 
-                    'Stock Restante': '20',
-                    Link: 'https://cdn.shopify.com/s/files/1/0629/5519/5787/products/glycolic-acid-7-toning-solution-240ml-673.jpg'
-                }
-            ];
-            
-            // Datos de muestra para InventarioAlpha
-            inventarioAlphaData = [
-                { Codigo: 'UL01400', Cantidad: '40' },
-                { Codigo: 'UL01398', Cantidad: '35' },
-                { Codigo: 'UL01500', Cantidad: '25' },
-                { Codigo: 'UL01600', Cantidad: '60' },
-                { Codigo: 'UL01700', Cantidad: '20' }
-            ];
-            
-            // Generar datos de ventas
-            generateSalesData();
-        }
         
         // Actualizar resumen del dashboard
         function updateDashboardSummary() {
@@ -519,12 +433,12 @@
             
             // Calcular productos con stock suficiente (>50%)
             const stockOkCount = hStockData.filter(item => {
-                const initialStock = parseInt(item['Stock Inicial'] || 0);
+                const initialStock = parseInt(item['Stock Inicial'] || 100);
                 if (initialStock === 0) return false;
                 
                 // Buscar stock actual en InventarioAlpha
                 const inventoryInfo = inventarioAlphaData.find(inv => inv.Codigo === item.SKU);
-                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(item['Stock Restante'] || 0);
+                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
                 
                 return (currentStock / initialStock) * 100 > 50;
             }).length;
@@ -550,12 +464,10 @@
                 return;
             }
             
-            // Filtrar productos que coincidan con la búsqueda en SKU, Nombre, Código de Barra o Categoría
+            // Filtrar productos que coincidan con la búsqueda en SKU (col G) o Nombre (col H)
             const results = hStockData.filter(item => 
                 (item.SKU && item.SKU.toString().toUpperCase().includes(query)) || 
-                (item.Nombre && item.Nombre.toString().toUpperCase().includes(query)) ||
-                (item.CodigoBarra && item.CodigoBarra.toString().toUpperCase().includes(query)) ||
-                (item.Categoria && item.Categoria.toString().toUpperCase().includes(query))
+                (item.Nombre && item.Nombre.toString().toUpperCase().includes(query))
             );
             
             // Mostrar resultados
@@ -569,7 +481,7 @@
                     resultItem.addEventListener('click', function() {
                         displayProductInfo(item.SKU);
                         searchResults.classList.add('hidden');
-                        searchInput.value = item.SKU; // Actualizar el valor del input
+                        searchInput.value = item.SKU; // Colocar el SKU en el campo de búsqueda
                     });
                     searchResults.appendChild(resultItem);
                 });
@@ -592,7 +504,7 @@
             
             // Buscar stock en InventarioAlpha por código
             const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
-            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(product['Stock Restante'] || 0);
+            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
             
             // Mostrar sección de información del producto
             document.getElementById('productInfo').classList.remove('hidden');
@@ -606,11 +518,11 @@
             document.getElementById('productCodigoBarra').textContent = product.CodigoBarra || '';
             document.getElementById('productCategoria').textContent = product.Categoria || '';
             document.getElementById('productCostoPromedio').textContent = `$${product.CostoPromedio || '0'}`;
-            document.getElementById('initialStock').textContent = `${product['Stock Inicial'] || 0} unidades`;
+            document.getElementById('initialStock').textContent = `${product['Stock Inicial'] || 100} unidades`;
             document.getElementById('currentStock').textContent = `${currentStock} unidades`;
             
             // Calcular porcentaje de stock y ventas
-            const initialStock = parseInt(product['Stock Inicial'] || 0);
+            const initialStock = parseInt(product['Stock Inicial'] || 100);
             const stockPercentage = initialStock > 0 ? (currentStock / initialStock) * 100 : 0;
             const soldUnits = initialStock - currentStock;
             const soldPercentage = initialStock > 0 ? (soldUnits / initialStock) * 100 : 0;
@@ -637,12 +549,16 @@
             soldProgress.style.width = `${soldPercentage}%`;
             soldProgress.textContent = `${Math.round(soldPercentage)}%`;
             
-            // Actualizar imagen del producto
+            // Actualizar imagen del producto y enlace
             const productImage = document.getElementById('productImage');
+            const productImageLink = document.getElementById('productImageLink');
+            
             if (product.Link && product.Link.trim() !== '') {
                 productImage.src = product.Link;
+                productImageLink.href = product.Link;
             } else {
                 productImage.src = '/api/placeholder/400/320';
+                productImageLink.href = '#';
             }
             
             // Obtener datos de ventas para el gráfico
@@ -713,8 +629,8 @@
             
             // Obtener datos actuales de inventario
             const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
-            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(product['Stock Restante'] || 0);
-            const initialStock = parseInt(product['Stock Inicial'] || 0);
+            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : 0;
+            const initialStock = parseInt(product['Stock Inicial'] || 100);
             
             // Calcular tendencia
             let trend = '';
