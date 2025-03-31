@@ -302,8 +302,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
-        // URL del Apps Script Web App
-        const APPS_SCRIPT_URL = const APPS_SCRIPT_URL = const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3PzXQRTO4UEu3k57aBs5Gzg9q63GMuj0YuTcBB3NvRDYRD4GBNVfpPoczlmbUk1kGBA/exec';
+        // URL del Apps Script Web App (ACTUALIZADA)
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3PzXQRTO4UEu3k57aBs5Gzg9q63GMuj0YuTcBB3NvRDYRD4GBNVfpPoczlmbUk1kGBA/exec';
 
         // Variables globales para almacenar datos
         let hStockData = [];
@@ -320,8 +320,8 @@
             const backButton = document.getElementById('backButton');
             const loadingIndicator = document.getElementById('loadingIndicator');
             
-            // Cargar datos
-            fetchDataFromAppsScript();
+            // Cargar datos (usando una opción alternativa en caso de problemas con Apps Script)
+            fetchDataWithTimeout();
             
             // Configurar eventos de búsqueda
             searchButton.addEventListener('click', performSearch);
@@ -353,19 +353,21 @@
             });
         });
 
-        // Obtener datos desde Apps Script
-        function fetchDataFromAppsScript() {
-            // Mostrar indicador de carga
-            document.getElementById('loadingIndicator').classList.remove('hidden');
+        // Cargar datos con tiempo límite para evitar carga infinita
+        function fetchDataWithTimeout() {
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Tiempo de espera agotado')), 10000);
+            });
             
-            // Hacer solicitud a Apps Script
-            fetch(APPS_SCRIPT_URL)
+            const fetchPromise = fetch(APPS_SCRIPT_URL)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Error en la respuesta: ' + response.statusText);
                     }
                     return response.json();
-                })
+                });
+            
+            Promise.race([fetchPromise, timeoutPromise])
                 .then(data => {
                     // Guardar datos
                     if (data.hStock) {
@@ -702,11 +704,6 @@
         }
 
         // Generar texto de análisis
-        function generateAnalysisText(sku, salesInfo) {
-            const product = hStockData.find(item => item.SKU === sku);
-            
-            if
-// Generar texto de análisis
         function generateAnalysisText(sku, salesInfo) {
             const product = hStockData.find(item => item.SKU === sku);
             
