@@ -155,8 +155,28 @@
                                 <div class="col-8" id="productName"></div>
                             </div>
                             <div class="row mb-2">
+                                <div class="col-4 fw-bold">Empresa:</div>
+                                <div class="col-8" id="productEmpresa"></div>
+                            </div>
+                            <div class="row mb-2">
                                 <div class="col-4 fw-bold">Marca:</div>
                                 <div class="col-8" id="productBrand"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Fecha Registro:</div>
+                                <div class="col-8" id="productFechaRegistro"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Código de Barra:</div>
+                                <div class="col-8" id="productCodigoBarra"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Categoría:</div>
+                                <div class="col-8" id="productCategoria"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Costo Promedio:</div>
+                                <div class="col-8" id="productCostoPromedio"></div>
                             </div>
                             <div class="row mb-2">
                                 <div class="col-4 fw-bold">Stock Inicial:</div>
@@ -283,7 +303,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script>
         // URL del Apps Script Web App
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEJCXlWapBw1Xaai7fB1_pGOkMYFkslo9dkHwCvBf7N0WgyCyvXgArMVIXTuNec6xFQg/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZ02IOXx9QhaR5qkA6vIj8CRu2VD53z99z_gxR0FzxxI99ugMsYMWzyQO_agMBwBNv1g/exec';
 
         // Variables globales para almacenar datos
         let hStockData = [];
@@ -414,7 +434,12 @@
                 { 
                     SKU: 'UL01400', 
                     Nombre: 'Niacinamide', 
+                    Empresa: 'The Ordinary Co.',
                     Marca: 'The Ordinary', 
+                    FechaRegistro: '2023-01-15',
+                    CodigoBarra: '5028463550115',
+                    Categoria: 'Skincare',
+                    CostoPromedio: '15.90',
                     'Stock Inicial': '100', 
                     'Stock Restante': '40',
                     Link: 'https://m.media-amazon.com/images/I/61SJxY1fkPL.jpg'
@@ -422,7 +447,12 @@
                 { 
                     SKU: 'UL01398', 
                     Nombre: 'Hyaluronic Acid 2% + B5', 
+                    Empresa: 'The Ordinary Co.',
                     Marca: 'The Ordinary', 
+                    FechaRegistro: '2023-01-20',
+                    CodigoBarra: '5028463550122',
+                    Categoria: 'Skincare',
+                    CostoPromedio: '12.50',
                     'Stock Inicial': '120', 
                     'Stock Restante': '35',
                     Link: 'https://images.sephora.com/is/image/sku/2031375-RHLP01'
@@ -430,26 +460,41 @@
                 { 
                     SKU: 'UL01500', 
                     Nombre: 'Retinol 1%', 
+                    Empresa: 'The Ordinary Co.',
                     Marca: 'The Ordinary', 
+                    FechaRegistro: '2023-02-10',
+                    CodigoBarra: '5028463550139',
+                    Categoria: 'Skincare',
+                    CostoPromedio: '18.75',
                     'Stock Inicial': '80', 
                     'Stock Restante': '25',
-                    Link: '/api/placeholder/400/320'
+                    Link: 'https://cdn.notinoimg.com/detail_thumb/the-ordinary/8057749433089_01/the-ordinary-retinol-1-in-squalane-serum-anti-rides-.jpg'
                 },
                 { 
                     SKU: 'UL01600', 
                     Nombre: 'Vitamin C Suspension', 
+                    Empresa: 'The Ordinary Co.',
                     Marca: 'The Ordinary', 
+                    FechaRegistro: '2023-03-05',
+                    CodigoBarra: '5028463550146',
+                    Categoria: 'Skincare',
+                    CostoPromedio: '14.30',
                     'Stock Inicial': '90', 
                     'Stock Restante': '60',
-                    Link: '/api/placeholder/400/320'
+                    Link: 'https://cdn.notinoimg.com/detail_thumb/the-ordinary/8058664697173_01-o/the-ordinary-vitamin-c-suspension-serum-anti-rides-.jpg'
                 },
                 { 
                     SKU: 'UL01700', 
                     Nombre: 'Glycolic Acid 7% Toning Solution', 
+                    Empresa: 'The Ordinary Co.',
                     Marca: 'The Ordinary', 
+                    FechaRegistro: '2023-03-15',
+                    CodigoBarra: '5028463550153',
+                    Categoria: 'Skincare',
+                    CostoPromedio: '16.80',
                     'Stock Inicial': '70', 
                     'Stock Restante': '20',
-                    Link: '/api/placeholder/400/320'
+                    Link: 'https://cdn.shopify.com/s/files/1/0629/5519/5787/products/glycolic-acid-7-toning-solution-240ml-673.jpg'
                 }
             ];
             
@@ -503,10 +548,12 @@
                 return;
             }
             
-            // Filtrar productos que coincidan con la búsqueda en SKU o Nombre
+            // Filtrar productos que coincidan con la búsqueda en SKU, Nombre, Código de Barra o Categoría
             const results = hStockData.filter(item => 
-                (item.SKU && item.SKU.toUpperCase().includes(query)) || 
-                (item.Nombre && item.Nombre.toUpperCase().includes(query))
+                (item.SKU && item.SKU.toString().toUpperCase().includes(query)) || 
+                (item.Nombre && item.Nombre.toString().toUpperCase().includes(query)) ||
+                (item.CodigoBarra && item.CodigoBarra.toString().toUpperCase().includes(query)) ||
+                (item.Categoria && item.Categoria.toString().toUpperCase().includes(query))
             );
             
             // Mostrar resultados
@@ -551,7 +598,12 @@
             // Llenar datos del producto
             document.getElementById('productSKU').textContent = product.SKU || '';
             document.getElementById('productName').textContent = product.Nombre || '';
+            document.getElementById('productEmpresa').textContent = product.Empresa || '';
             document.getElementById('productBrand').textContent = product.Marca || '';
+            document.getElementById('productFechaRegistro').textContent = product.FechaRegistro || '';
+            document.getElementById('productCodigoBarra').textContent = product.CodigoBarra || '';
+            document.getElementById('productCategoria').textContent = product.Categoria || '';
+            document.getElementById('productCostoPromedio').textContent = `$${product.CostoPromedio || '0'}`;
             document.getElementById('initialStock').textContent = `${product['Stock Inicial'] || 0} unidades`;
             document.getElementById('currentStock').textContent = `${currentStock} unidades`;
             
@@ -650,6 +702,11 @@
         }
 
         // Generar texto de análisis
+        function generateAnalysisText(sku, salesInfo) {
+            const product = hStockData.find(item => item.SKU === sku);
+            
+            if
+// Generar texto de análisis
         function generateAnalysisText(sku, salesInfo) {
             const product = hStockData.find(item => item.SKU === sku);
             
