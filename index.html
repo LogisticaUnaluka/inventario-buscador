@@ -215,3 +215,489 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Análisis de Tendencia</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="trendGraph" class="trend-graph">
+                                <canvas id="salesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recomendaciones -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">Análisis y Recomendaciones</h5>
+                        </div>
+                        <div class="card-body">
+                            <p id="analysisText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botón para volver a la búsqueda -->
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button id="backButton" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver a la búsqueda
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Carga inicial -->
+        <div id="loadingIndicator" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando datos del inventario...</p>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Sistema de Búsqueda de Inventario</h5>
+                    <p>Esta aplicación se conecta con Google Sheets a través de Apps Script.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p>© 2025 - Todos los derechos reservados</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script>
+        // URL del Apps Script Web App
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzS_YDbaXGXwx0HS7DbPaTRMQ-sMqyH7Ng9wec86-L1fvKc9IC3tXG-KMA9h43DIb_Vyg/exec';
+
+        // Variables globales para almacenar datos
+        let hStockData = [];
+        let inventarioAlphaData = [];
+        let salesData = [];
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos del DOM
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const searchResults = document.getElementById('searchResults');
+            const productInfo = document.getElementById('productInfo');
+            const backButton = document.getElementById('backButton');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            // Cargar datos
+            fetchDataFromAppsScript();
+            
+            // Configurar eventos de búsqueda
+            searchButton.addEventListener('click', performSearch);
+            searchInput.addEventListener('input', function() {
+                if (searchInput.value.length >= 3) {
+                    performSearch();
+                } else {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Botón para volver
+            backButton.addEventListener('click', function() {
+                productInfo.classList.add('hidden');
+                searchInput.value = '';
+                searchInput.focus();
+            });
+            
+            // Cerrar resultados al hacer clic fuera
+            document.addEventListener('click', function(event) {
+                if (!searchResults.contains(event.target) && event.target !== searchInput) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+        });
+
+        // Obtener datos desde Apps Script
+        function fetchDataFromAppsScript() {
+            // Mostrar indicador de carga
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            
+            // Hacer solicitud a Apps Script
+            fetch(APPS_SCRIPT_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Guardar datos
+                    if (data.hStock) {
+                        hStockData = data.hStock;
+                        console.log('Datos de H.Stock cargados:', hStockData.length, 'registros');
+                    }
+                    
+                    if (data.inventario) {
+                        inventarioAlphaData = data.inventario;
+                        console.log('Datos de InventarioAlpha cargados:', inventarioAlphaData.length, 'registros');
+                    }
+                    
+                    // Generar datos de ventas basados en el inventario
+                    generateSalesData();
+                    
+                    // Actualizar dashboard
+                    updateDashboardSummary();
+                    
+                    // Ocultar indicador de carga
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error al cargar datos:', error);
+                    // Cargar datos de ejemplo en caso de error
+                    loadSampleData();
+                    updateDashboardSummary();
+                    // Ocultar indicador de carga
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                    
+                    // Mostrar mensaje de error
+                    alert('No se pudieron cargar los datos del inventario. Se están usando datos de ejemplo.');
+                });
+        }
+
+        // Generar datos de ventas basados en el inventario
+        function generateSalesData() {
+            salesData = [];
+            
+            hStockData.forEach(product => {
+                const sku = product.SKU || '';
+                if (!sku) return;
+                
+                const initialStock = parseInt(product['Stock Inicial'] || 0);
+                
+                // Buscar stock actual en InventarioAlpha
+                const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
+                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(product['Stock Restante'] || 0);
+                
+                const totalSold = initialStock - currentStock;
+                
+                // Distribuir ventas en semanas (simulación)
+                const week1 = Math.floor(totalSold * 0.4);
+                const week2 = Math.floor(totalSold * 0.3);
+                const week3 = totalSold - week1 - week2;
+                
+                salesData.push({ sku, week1, week2, week3 });
+            });
+        }
+
+        // Cargar datos de ejemplo en caso de que falle la API
+        function loadSampleData() {
+            console.log('Cargando datos de ejemplo...');
+            
+            // Datos de muestra para H.Stock
+            hStockData = [
+                { 
+                    SKU: 'UL01400', 
+                    Nombre: 'Niacinamide', 
+                    Marca: 'The Ordinary', 
+                    'Stock Inicial': '100', 
+                    'Stock Restante': '40',
+                    Link: 'https://m.media-amazon.com/images/I/61SJxY1fkPL.jpg'
+                },
+                { 
+                    SKU: 'UL01398', 
+                    Nombre: 'Hyaluronic Acid 2% + B5', 
+                    Marca: 'The Ordinary', 
+                    'Stock Inicial': '120', 
+                    'Stock Restante': '35',
+                    Link: 'https://images.sephora.com/is/image/sku/2031375-RHLP01'
+                },
+                { 
+                    SKU: 'UL01500', 
+                    Nombre: 'Retinol 1%', 
+                    Marca: 'The Ordinary', 
+                    'Stock Inicial': '80', 
+                    'Stock Restante': '25',
+                    Link: '/api/placeholder/400/320'
+                },
+                { 
+                    SKU: 'UL01600', 
+                    Nombre: 'Vitamin C Suspension', 
+                    Marca: 'The Ordinary', 
+                    'Stock Inicial': '90', 
+                    'Stock Restante': '60',
+                    Link: '/api/placeholder/400/320'
+                },
+                { 
+                    SKU: 'UL01700', 
+                    Nombre: 'Glycolic Acid 7% Toning Solution', 
+                    Marca: 'The Ordinary', 
+                    'Stock Inicial': '70', 
+                    'Stock Restante': '20',
+                    Link: '/api/placeholder/400/320'
+                }
+            ];
+            
+            // Datos de muestra para InventarioAlpha
+            inventarioAlphaData = [
+                { Codigo: 'UL01400', Cantidad: '40' },
+                { Codigo: 'UL01398', Cantidad: '35' },
+                { Codigo: 'UL01500', Cantidad: '25' },
+                { Codigo: 'UL01600', Cantidad: '60' },
+                { Codigo: 'UL01700', Cantidad: '20' }
+            ];
+            
+            // Generar datos de ventas
+            generateSalesData();
+        }
+        
+        // Actualizar resumen del dashboard
+        function updateDashboardSummary() {
+            document.getElementById('totalProducts').textContent = hStockData.length;
+            
+            // Calcular productos con stock suficiente (>50%)
+            const stockOkCount = hStockData.filter(item => {
+                const initialStock = parseInt(item['Stock Inicial'] || 0);
+                if (initialStock === 0) return false;
+                
+                // Buscar stock actual en InventarioAlpha
+                const inventoryInfo = inventarioAlphaData.find(inv => inv.Codigo === item.SKU);
+                const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(item['Stock Restante'] || 0);
+                
+                return (currentStock / initialStock) * 100 > 50;
+            }).length;
+            
+            // Calcular productos con stock bajo (<50%)
+            const lowStockCount = hStockData.length - stockOkCount;
+            
+            document.getElementById('availableStock').textContent = stockOkCount;
+            document.getElementById('lowStockProducts').textContent = lowStockCount;
+            
+            // Actualizar fecha
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
+        }
+
+        // Realizar búsqueda
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const query = searchInput.value.trim().toUpperCase();
+            
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            
+            // Filtrar productos que coincidan con la búsqueda en SKU o Nombre
+            const results = hStockData.filter(item => 
+                (item.SKU && item.SKU.toUpperCase().includes(query)) || 
+                (item.Nombre && item.Nombre.toUpperCase().includes(query))
+            );
+            
+            // Mostrar resultados
+            searchResults.innerHTML = '';
+            
+            if (results.length > 0) {
+                results.forEach(item => {
+                    const resultItem = document.createElement('a');
+                    resultItem.className = 'list-group-item result-item';
+                    resultItem.innerHTML = `<strong>${item.SKU || ''}</strong> - ${item.Nombre || ''} (${item.Marca || ''})`;
+                    resultItem.addEventListener('click', function() {
+                        displayProductInfo(item.SKU);
+                        searchResults.classList.add('hidden');
+                        searchInput.value = item.SKU; // Actualizar el valor del input
+                    });
+                    searchResults.appendChild(resultItem);
+                });
+                searchResults.classList.remove('hidden');
+            } else {
+                searchResults.innerHTML = '<a class="list-group-item">No se encontraron resultados</a>';
+                searchResults.classList.remove('hidden');
+            }
+        }
+
+        // Mostrar información del producto
+        function displayProductInfo(sku) {
+            // Buscar el producto en H.Stock por SKU
+            const product = hStockData.find(item => item.SKU === sku);
+            
+            if (!product) {
+                alert('Producto no encontrado');
+                return;
+            }
+            
+            // Buscar stock en InventarioAlpha por código
+            const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
+            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(product['Stock Restante'] || 0);
+            
+            // Mostrar sección de información del producto
+            document.getElementById('productInfo').classList.remove('hidden');
+            
+            // Llenar datos del producto
+            document.getElementById('productSKU').textContent = product.SKU || '';
+            document.getElementById('productName').textContent = product.Nombre || '';
+            document.getElementById('productBrand').textContent = product.Marca || '';
+            document.getElementById('initialStock').textContent = `${product['Stock Inicial'] || 0} unidades`;
+            document.getElementById('currentStock').textContent = `${currentStock} unidades`;
+            
+            // Calcular porcentaje de stock y ventas
+            const initialStock = parseInt(product['Stock Inicial'] || 0);
+            const stockPercentage = initialStock > 0 ? (currentStock / initialStock) * 100 : 0;
+            const soldUnits = initialStock - currentStock;
+            const soldPercentage = initialStock > 0 ? (soldUnits / initialStock) * 100 : 0;
+            
+            // Actualizar barras de progreso
+            const stockProgress = document.getElementById('stockProgress');
+            stockProgress.style.width = `${stockPercentage}%`;
+            stockProgress.textContent = `${Math.round(stockPercentage)}%`;
+            
+            // Cambiar color según nivel de stock
+            if (stockPercentage > 50) {
+                stockProgress.className = 'progress-bar bg-success';
+            } else if (stockPercentage > 25) {
+                stockProgress.className = 'progress-bar bg-warning';
+            } else {
+                stockProgress.className = 'progress-bar bg-danger';
+            }
+            
+            // Actualizar resumen de ventas
+            document.getElementById('totalSold').textContent = `${soldUnits} unidades`;
+            document.getElementById('soldPercentage').textContent = `${Math.round(soldPercentage)}%`;
+            
+            const soldProgress = document.getElementById('soldProgress');
+            soldProgress.style.width = `${soldPercentage}%`;
+            soldProgress.textContent = `${Math.round(soldPercentage)}%`;
+            
+            // Actualizar imagen del producto
+            const productImage = document.getElementById('productImage');
+            if (product.Link && product.Link.trim() !== '') {
+                productImage.src = product.Link;
+            } else {
+                productImage.src = '/api/placeholder/400/320';
+            }
+            
+            // Obtener datos de ventas para el gráfico
+            const salesInfo = salesData.find(item => item.sku === sku) || { sku, week1: 0, week2: 0, week3: 0 };
+            
+            // Actualizar gráfico de ventas
+            updateSalesChart(salesInfo);
+            
+            // Generar texto de análisis
+            generateAnalysisText(sku, salesInfo);
+            
+            // Hacer scroll al detalle del producto
+            document.getElementById('productInfo').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Actualizar gráfico de ventas
+        function updateSalesChart(salesInfo) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            // Verificar si ya existe un gráfico y destruirlo
+            if (window.salesChart) {
+                window.salesChart.destroy();
+            }
+            
+            // Crear nuevo gráfico
+            window.salesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Semana 1', 'Semana 2', 'Semana 3'],
+                    datasets: [{
+                        label: 'Ventas semanales',
+                        data: [salesInfo.week1, salesInfo.week2, salesInfo.week3],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(54, 162, 235, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Generar texto de análisis
+        function generateAnalysisText(sku, salesInfo) {
+            const product = hStockData.find(item => item.SKU === sku);
+            
+            if (!product) {
+                return;
+            }
+            
+            // Obtener datos actuales de inventario
+            const inventoryInfo = inventarioAlphaData.find(item => item.Codigo === sku);
+            const currentStock = inventoryInfo ? parseInt(inventoryInfo.Cantidad || 0) : parseInt(product['Stock Restante'] || 0);
+            const initialStock = parseInt(product['Stock Inicial'] || 0);
+            
+            // Calcular tendencia
+            let trend = '';
+            if (salesInfo.week3 > salesInfo.week2) {
+                trend = 'al alza';
+            } else if (salesInfo.week3 < salesInfo.week2) {
+                trend = 'a la baja';
+            } else {
+                trend = 'estable';
+            }
+            
+            // Calcular stock restante
+            const remainingPercentage = initialStock > 0 ? (currentStock / initialStock) * 100 : 0;
+            let stockStatus = '';
+            let recommendation = '';
+            
+            if (remainingPercentage < 25) {
+                stockStatus = 'crítico';
+                recommendation = 'Se recomienda reabastecer urgentemente.';
+            } else if (remainingPercentage < 50) {
+                stockStatus = 'bajo';
+                recommendation = 'Se recomienda planificar reabastecimiento pronto.';
+            } else {
+                stockStatus = 'adecuado';
+                recommendation = 'El stock es suficiente para la demanda actual.';
+            }
+            
+            // Generar texto completo
+            const analysisText = `
+                La venta del producto ${product.SKU || ''} (${product.Nombre || ''}) muestra una tendencia ${trend} 
+                con ${salesInfo.week2} unidades vendidas en la Semana 2 y ${salesInfo.week3} unidades en la Semana 3.
+                El nivel de stock actual es ${stockStatus} (${currentStock} unidades, ${Math.round(remainingPercentage)}% del inicial).
+                ${recommendation}
+            `;
+            
+            document.getElementById('analysisText').textContent = analysisText.trim();
+        }
+    </script>
+</body>
+</html>
